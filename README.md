@@ -4,6 +4,7 @@
 
 - [ ] 싱글톤 패턴
 - [ ] Dto 사용
+- [ ] [정적 팩토리 메서드](https://tecoble.techcourse.co.kr/post/2020-05-26-static-factory-method/)
 
 ### 빨리빨리
 
