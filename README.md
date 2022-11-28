@@ -8,6 +8,7 @@
 ### 빨리빨리
 
 - [스트림으로 중복값 찾기](https://developer-talk.tistory.com/398)
+- [Char와 Ascii Code](https://blog.naver.com/PostView.nhn?blogId=jysaa5&logNo=221831226674)
 
 ### 두고두고 읽어볼 링크
 
