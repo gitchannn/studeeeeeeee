@@ -90,3 +90,27 @@ public class InputView {
     }
 }
 ```
+
+## Validation
+
+#### Validator 인터페이스 생성
+
+```
+package lotto.util;
+
+public interface Validator {
+    void validate(String userInput) throws IllegalArgumentException;
+}
+```
+
+#### 맞게 구현
+```
+public class BonusNumberValidator implements Validator {
+    @Override
+    public void validate(String input) throws IllegalArgumentException {
+        validateNotNull(input);
+        validateNumber(input);
+        validateRange(input);
+    }
+}
+```
