@@ -4,34 +4,32 @@
 ```
 public class Application {
     public static void main(String[] args) {
-        // TODO: 프로그램 구현
         InputView inputView = new InputView();
         OutputView outputView = new OutputView();
 
-        LottoController lottoController = new LottoController(inputView, outputView);
-        lottoController.play();
+        GameController gameController = new GameController(inputView, outputView);
+        gameController.play();
     }
 }
 ```
 #### Controller
 ```
-public class LottoController {
+public class GameController {
     private final InputView inputView;
     private final OutputView outputView;
 
-    public LottoController(InputView inputView, OutputView outputView) {
+    public GameController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
         this.outputView = outputView;
     }
 
     public void play() {
         try {
-        // 여기에 작성
+            // 여기에 작성
         } catch (IllegalArgumentException exception) {
             outputView.printExceptionMessage(exception);
         }
     }
-
 }
 ```
 #### OuputView
@@ -66,7 +64,7 @@ public enum ExceptionMessage {
 }
 ```
 - 예외를 던지는 곳에서
-`throw new Illegal
+`throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
 
 
 ### Console Message at INPUTVIEW
