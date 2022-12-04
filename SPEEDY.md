@@ -91,24 +91,150 @@ public class InputView {
 
 ## Validation
 
-#### Validator 인터페이스 생성
+#### Validator 추상메서드 생성
 
 ```
-package lotto.util;
+public abstract class Validator {
+    
+    private enum Range{
+        MIN_RANGE(3), MAX_RANGE(20);
 
-public interface Validator {
-    void validate(String userInput) throws IllegalArgumentException;
+        private final int value;
+
+        Range(int value) {
+            this.value = value;
+        }
+    }
+    private static final Pattern NUMBER_REGEX = Pattern.compile("^[0-9]*$");
+
+    abstract void validate(String input) throws IllegalArgumentException;
+
+    static String removeSpace(String input) {
+        return input.replaceAll(" ", "");
+    }
+
+    void validateNumber(String input) {
+        if (!NUMBER_REGEX.matcher(input).matches()) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    void validateInputRange(String input) {
+        try {
+            Integer.parseInt(input);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    void validateNumberRange(String input) {
+        int number = Integer.parseInt(input);
+        if (number < Range.MIN_RANGE.value || number > Range.MIN_RANGE.value) {
+            throw new IllegalArgumentException();
+        }
+    }
+
 }
 ```
 
-#### 맞게 구현
+#### 자손 클래스로 구체화
 ```
-public class BonusNumberValidator implements Validator {
+public class BridgeSizeValidator extends Validator {
+    private enum Range {
+        MIN_RANGE(3), MAX_RANGE(20);
+
+        private final int value;
+
+        Range(int value) {
+            this.value = value;
+        }
+    }
+
+    private static final Pattern NUMBER_REGEX = Pattern.compile("^[0-9]*$");
+
     @Override
     public void validate(String input) throws IllegalArgumentException {
-        validateNotNull(input);
-        validateNumber(input);
-        validateRange(input);
+        String bridgeSize = removeSpace(input);
+        validateNumber(bridgeSize);
+        validateInputRange(bridgeSize);
+        validateNumberRange(bridgeSize);
     }
+
+    private void validateNumber(String input) {
+        if (!NUMBER_REGEX.matcher(input).matches()) {
+            throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
+        }
+    }
+
+    private void validateInputRange(String input) {
+        try {
+            Integer.parseInt(input);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_INT_RANGE.getMessage());
+        }
+    }
+
+    private void validateNumberRange(String input) {
+        int number = Integer.parseInt(input);
+        if (number < Range.MIN_RANGE.value || number > Range.MAX_RANGE.value) {
+            throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_IN_RANGE.getMessage());
+        }
+    }
+}
+
+```
+
+- 테스트 코드도 동시에 작성
+```
+class BridgeSizeValidatorTest {
+
+    private BridgeSizeValidator validator;
+
+    @BeforeEach
+    void setUp() {
+        validator = new BridgeSizeValidator();
+    }
+
+    @Nested
+    class invalidInput {
+
+        @DisplayName("자연수가 아닌 입력")
+        @ParameterizedTest
+        @ValueSource(strings = {"aaa", "문자", "아아아아", "아 아 아 ㅇ ㅏ", "-1", "-299"})
+        void 자연수가_아닌_입력(String input) {
+            assertThatThrownBy(() -> validator.validate(input))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
+        }
+
+        @DisplayName("int 범위를 초과한 입력")
+        @ParameterizedTest
+        @ValueSource(strings = {"1111111111111111111111111", "2183128312887721847281389"})
+        void int_입력_범위_초과(String input) {
+            assertThatThrownBy(() -> validator.validate(input))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage(ExceptionMessage.OUT_OF_INT_RANGE.getMessage());
+        }
+
+        @DisplayName("3 이상 20 이하의 값이 아니면 예외 처리한다.")
+        @ParameterizedTest
+        @ValueSource(strings = {"0", "1", "2", "21"})
+        void 다리_길이_범위를_초과(String input) {
+            assertThatThrownBy(() -> validator.validate(input))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage(ExceptionMessage.INVALID_NOT_IN_RANGE.getMessage());
+        }
+    }
+
+    @Nested
+    class validInputTest {
+        @ParameterizedTest
+        @ValueSource(strings = {"3", "4", "19", "20"})
+        void 정상_입력(String input) {
+            assertThatCode(() -> validator.validate(input))
+                    .doesNotThrowAnyException();
+        }
+    }
+
 }
 ```
