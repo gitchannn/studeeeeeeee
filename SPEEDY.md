@@ -49,8 +49,9 @@ public class OutputView {
 ```
 public enum ExceptionMessage {
 
-    NOT_NUMERIC("입력 범위를 초과했습니다."),
-    NOT_IN_RANGE("1부터 45까지의 숫자만 입력 가능합니다.");
+    INVALID_NOT_NUMERIC("자연수만 입력 가능합니다."),
+    INVALID_OUT_OF_INT_RANGE("입력 범위를 초과하였습니다.");
+    
     public static final String BASE_MESSAGE = "[ERROR] %s";
     private final String message;
 
@@ -113,17 +114,17 @@ public abstract class Validator {
         return input.replaceAll(" ", "");
     }
 
-    void validateNumber(String input) {
+       void validateNumeric(String input) {
         if (!NUMBER_REGEX.matcher(input).matches()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
         }
     }
 
-    void validateInputRange(String input) {
+    void validateRange(String input) {
         try {
             Integer.parseInt(input);
         } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(ExceptionMessage.INVALID_OUT_OF_INT_RANGE.getMessage(), exception);
         }
     }
 
@@ -155,32 +156,10 @@ public class BridgeSizeValidator extends Validator {
     @Override
     public void validate(String input) throws IllegalArgumentException {
         String bridgeSize = removeSpace(input);
-        validateNumber(bridgeSize);
-        validateInputRange(bridgeSize);
+        validateNumeric(bridgeSize);
+        validateRange(bridgeSize);
         validateNumberRange(bridgeSize);
     }
-
-    private void validateNumber(String input) {
-        if (!NUMBER_REGEX.matcher(input).matches()) {
-            throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
-        }
-    }
-
-    private void validateInputRange(String input) {
-        try {
-            Integer.parseInt(input);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_INT_RANGE.getMessage());
-        }
-    }
-
-    private void validateNumberRange(String input) {
-        int number = Integer.parseInt(input);
-        if (number < Range.MIN_RANGE.value || number > Range.MAX_RANGE.value) {
-            throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_IN_RANGE.getMessage());
-        }
-    }
-}
 
 ```
 
