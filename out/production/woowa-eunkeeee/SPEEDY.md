@@ -353,7 +353,7 @@ public class Constants {
         }
     }
 
-    // 12345 => 12,345
+    // `REGEX`에 따라 `format`하기
     public static String formatRewardRate(BigDecimal rewardRate) {
         return new DecimalFormat(Regex.DECIMAL_FORMAT.regex).format(rewardRate);
     }
@@ -362,5 +362,7 @@ public class Constants {
     private static String formatCashPrize(int cashPrize) {
         return String.valueOf(cashPrize).replaceAll(Regex.CASH_PRIZE_REGEX.regex, ",");
     }
-```
 
+
+
+```
