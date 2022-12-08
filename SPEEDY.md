@@ -1,6 +1,11 @@
 ### START
 
+- `controller` `model` `util` `view` 패키지 생성
+- `util` 패키지 안에 `validator` 패키지 생성
+- `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
+
 #### Application
+
 ```
 public class Application {
     public static void main(String[] args) {
@@ -12,7 +17,11 @@ public class Application {
     }
 }
 ```
-#### Controller
+
+#### GameController
+
+- 게임에 필요한 다른 변수들이 많으면 `GameVariable` 클래스 생성을 고려한다.
+
 ```
 public class GameController {
     private final InputView inputView;
@@ -24,28 +33,37 @@ public class GameController {
     }
 
     public void play() {
-        try {
-            // 여기에 작성
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
+        outputView.printGameStart();
     }
 }
 ```
-#### OuputView
+
+#### OutputView
+
 ```
 public class OutputView {
 
-    public void printExceptionMessage(Exception exception) {
-        System.out.println(exception.getMessage());
+    private enum ConsoleMessage {
+        OUTPUT_GAME_START("게임을 시작합니다.");
+
+        private final String message;
+
+        ConsoleMessage(String message) {
+            this.message = message;
+        }
     }
+
+  public void printGameStart() { 
+    System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
+  }
+
 }
 ```
 
 ### 출력 메세지 처리
 
-
 #### ExceptionMessage
+
 ```
 public enum ExceptionMessage {
 
@@ -64,11 +82,12 @@ public enum ExceptionMessage {
     }
 }
 ```
+
 - 예외를 던지는 곳에서
-`throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
+  `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
 
+### Console Message at VIEW
 
-### Console Message at INPUTVIEW
 ```
 public class InputView {
 
@@ -84,8 +103,51 @@ public class InputView {
 
     public int readBudget() {
         System.out.println(ConsoleMessage.INPUT_BUDGET.message);
-        String input = Console.readLine();
+        String input = Util.removeSpace(Console.readLine());
+        // validate
         return Integer.parseInt(input);
+    }
+}
+```
+
+## Util
+
+- 필요한 것만 골라다 쓰자!
+
+``` 
+public class Util {
+
+    public static String removeSpace(String input) {
+        return input.replaceAll(Regex.SPACE.regex, Regex.NO_SPACE.regex);
+    }
+
+    public static String removeDelimiters(String input) {
+        return input.replace(Regex.SQUARE_BRACKETS_START.regex, Regex.NO_SPACE.regex)
+                .replace(Regex.SQUARE_BRACKETS_END.regex, Regex.NO_SPACE.regex);
+    }
+
+    public static List<String> splitByComma(String input) {
+        return Arrays.asList(Util.removeSpace(input).split(Regex.COMMA.regex));
+    }
+
+    public static List<String> formatProductInfo(String input) {
+        return Util.splitByComma(Util.removeDelimiters(Util.removeSpace(input)));
+    }
+
+
+    private enum Regex {
+        SPACE(" "), NO_SPACE(""),
+        SQUARE_BRACKETS_START("["), SQUARE_BRACKETS_END("]"),
+        COMMA(",");
+
+        private final String regex;
+
+        Regex(String regex) {
+            this.regex = regex;
+        }
+    }
+
+    private Util() {
     }
 }
 ```
@@ -139,6 +201,7 @@ public abstract class Validator {
 ```
 
 #### 자손 클래스로 구체화
+
 ```
 public class BridgeSizeValidator extends Validator {
     private enum Range {
@@ -164,6 +227,8 @@ public class BridgeSizeValidator extends Validator {
 ```
 
 - 테스트 코드도 동시에 작성
+    - `removeSpace`는 `inputView`에서 이미 행하고 나서 들어오는 것이기 때문에 여기서는 공백 제거를 테스트하면 안됨
+
 ```
 class BudgetValidatorTest {
 
@@ -179,11 +244,11 @@ class BudgetValidatorTest {
 
         @DisplayName("자연수가 아닌 입력의 경우 예외 처리한다.")
         @ParameterizedTest
-        @ValueSource(strings = {"한글", "moonja", "   문자   wi t h 공    백   ", " -1000 ", "- 2 32 2190000"})
+        @ValueSource(strings = {"한글", "moonja", " -1000 ", "-2322190000"})
         void 자연수가_아닌_입력(String input) {
-            assertThatThrownBy(() -> budgetValidator.validate(input))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
+            assertThatIllegalArgumentException()
+                    .isThrownBy(() -> validator.validate(input))
+                    .withMessageStartingWith(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
         }
 
 
@@ -191,9 +256,9 @@ class BudgetValidatorTest {
         @ParameterizedTest
         @ValueSource(strings = {"2222222222222222222222222222000", "1294013905724312349120948120000"})
         void int_범위를_벗어난_입력(String input) {
-            assertThatThrownBy(() -> budgetValidator.validate(input))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage(ExceptionMessage.INVALID_OUT_OF_INT_RANGE.getMessage());
+            assertThatIllegalArgumentException()
+                    .isThrownBy(() -> validator.validate(input))
+                    .withMessageStartingWith(ExceptionMessage.INVALID_OUT_OF_INT_RANGE.getMessage());
         }
 
     }
@@ -210,3 +275,4 @@ class BudgetValidatorTest {
     }
 }
 ```
+
