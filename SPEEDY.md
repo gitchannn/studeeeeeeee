@@ -67,14 +67,14 @@ public class OutputView {
 ```
 public enum ExceptionMessage {
 
-    INVALID_NOT_NUMERIC("자연수만 입력 가능합니다."),
-    INVALID_OUT_OF_INT_RANGE("입력 범위를 초과하였습니다.");
-    
+    INVALID_UNIT("%d원으로 나누어 떨어지는 수를 입력해 주세요.", Validator.MIN_UNIT),
+    INVALID_NO_SUCH_PRODUCT("해당하는 상품이 존재하지 않습니다.");
+
     public static final String BASE_MESSAGE = "[ERROR] %s";
     private final String message;
 
-    ExceptionMessage(String message) {
-        this.message = String.format(BASE_MESSAGE, message);
+    ExceptionMessage(String message, Object... replaces) {
+        this.message = String.format(BASE_MESSAGE, String.format(message, replaces));
     }
 
     public String getMessage() {
@@ -218,10 +218,9 @@ public class BridgeSizeValidator extends Validator {
 
     @Override
     public void validate(String input) throws IllegalArgumentException {
-        String bridgeSize = removeSpace(input);
-        validateNumeric(bridgeSize);
-        validateRange(bridgeSize);
-        validateNumberRange(bridgeSize);
+        validateNumeric(input);
+        validateRange(input);
+        validateNumberRange(input);
     }
 
 ```
@@ -242,19 +241,19 @@ class BudgetValidatorTest {
     @Nested
     class invalidInputTest {
 
-        @DisplayName("자연수가 아닌 입력의 경우 예외 처리한다.")
         @ParameterizedTest
         @ValueSource(strings = {"한글", "moonja", " -1000 ", "-2322190000"})
+        @DisplayName("자연수가 아닌 입력의 경우 예외 처리한다.")
         void 자연수가_아닌_입력(String input) {
             assertThatIllegalArgumentException()
                     .isThrownBy(() -> validator.validate(input))
                     .withMessageStartingWith(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
         }
 
-
-        @DisplayName("int 범위를 초과한 입력의 경우 예외 처리한다.")
+        
         @ParameterizedTest
         @ValueSource(strings = {"2222222222222222222222222222000", "1294013905724312349120948120000"})
+        @DisplayName("int 범위를 초과한 입력의 경우 예외 처리한다.")
         void int_범위를_벗어난_입력(String input) {
             assertThatIllegalArgumentException()
                     .isThrownBy(() -> validator.validate(input))
@@ -266,7 +265,7 @@ class BudgetValidatorTest {
     @Nested
     class validInputTest {
         @ParameterizedTest
-        @ValueSource(strings = {"222000", "22222000", " 1   0    0  0   "})
+        @ValueSource(strings = {"222000", "22222000", " 1000"})
         void 정상_입력(String input) {
             assertThatCode(() -> budgetValidator.validate(input))
                     .doesNotThrowAnyException();
