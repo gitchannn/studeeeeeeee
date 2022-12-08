@@ -1,8 +1,8 @@
 ### START
 
 - `controller` `model` `util` `view` 패키지 생성
-- `util` 패키지 안에 `validator` 패키지 생성
 - `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
+- `util` 패키지 안에 `validator` 패키지 생성
 
 #### Application
 
@@ -60,33 +60,7 @@ public class OutputView {
 }
 ```
 
-### 출력 메세지 처리
-
-#### ExceptionMessage
-
-```
-public enum ExceptionMessage {
-
-    INVALID_UNIT("%d원으로 나누어 떨어지는 수를 입력해 주세요.", Validator.MIN_UNIT),
-    INVALID_NO_SUCH_PRODUCT("해당하는 상품이 존재하지 않습니다.");
-
-    public static final String BASE_MESSAGE = "[ERROR] %s";
-    private final String message;
-
-    ExceptionMessage(String message, Object... replaces) {
-        this.message = String.format(BASE_MESSAGE, String.format(message, replaces));
-    }
-
-    public String getMessage() {
-        return message;
-    }
-}
-```
-
-- 예외를 던지는 곳에서
-  `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
-
-### Console Message at VIEW
+### InputView
 
 ```
 public class InputView {
@@ -109,6 +83,34 @@ public class InputView {
     }
 }
 ```
+
+### 출력 메세지 처리
+
+#### ExceptionMessage
+
+```
+public enum ExceptionMessage {
+
+    INVALID_NOT_NUMERIC("자연수만 입력 가능합니다."),
+    INVALID_OUT_OF_INT_RANGE("입력 범위를 초과하였습니다.");
+
+    public static final String BASE_MESSAGE = "[ERROR] %s";
+    private final String message;
+
+    ExceptionMessage(String message, Object... replaces) {
+        this.message = String.format(BASE_MESSAGE, String.format(message, replaces));
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+```
+
+- 예외를 던지는 곳에서
+  `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
+
+
 
 ## Util
 
