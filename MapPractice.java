@@ -11,7 +11,6 @@ public class MapPractice {
         BigDecimal rewardRate = calculatePercent(new BigDecimal("500000"), new BigDecimal("8000"));
         System.out.println(rewardRate); // 6250.0
 
-
         String formattedRate = formatRewardRate(new BigDecimal("324329209.35823"));
         System.out.println(formattedRate); // 324,329,209.4
 

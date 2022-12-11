@@ -1,6 +1,7 @@
 ### START
 
 ### 기능 목록을 작성할 때
+
 - 최대한 뭉뚱그려서 **크게 크게 분리**한다.
 - 자잘한 한 판에서 죽고 사는 문제는 다른 `Status` 클래스를 만들어 관리하자 !!!
 - 필요하면 나중에 수정하면 된다 !!!!
@@ -74,6 +75,7 @@ public class InputView {
     }
 }
 ```
+
 # Controller & Application
 
 !!! 먼저 생명주기 관리 ver 쓰고 아래에 '안관리 ver' 첨부하겠음
@@ -81,6 +83,7 @@ public class InputView {
 ##### 생명주기 관리 ver
 
 ### 생명주기 관리 ver `GameController`
+
 ```
 public class GameController {
     private final InputView inputView;
@@ -109,7 +112,7 @@ public class GameController {
         }
     }
 ```
-  
+
 ### 생명주기 관리 ver `Application`
 
 ```
@@ -128,8 +131,8 @@ public class GameController {
 }
 ```
 
-
 ##### 생명주기 '안관리 ver'
+
 #### Application
 
 ```
@@ -164,11 +167,10 @@ public class GameController {
 }
 ```
 
-
-
 ### 출력 메세지 처리
 
 #### ExceptionMessage
+
 - 고냥 모든 Message에 사용 가능
 - 클래스 분리하지 않고 해당 클래스 안에서 `private`
 
@@ -194,7 +196,7 @@ public enum ExceptionMessage {
 - 예외를 던지는 곳에서
   `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
 - 같은 클래스 내면
- `throw new IllegalArgumentException(ExceptionMessage.~~.message);`
+  `throw new IllegalArgumentException(ExceptionMessage.~~.message);`
 
 ## Util
 
@@ -452,7 +454,6 @@ public class Constants {
         return String.valueOf(cashPrize).replaceAll(Regex.CASH_PRIZE_REGEX.regex, ",");
     }
 ```
-
 
 ### Enum 클래스 관리
 

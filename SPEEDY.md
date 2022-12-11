@@ -4,8 +4,6 @@
 - `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
 - `util` 패키지 안에 `validator` 패키지 생성
 
-
-
 #### Application
 
 ```
@@ -111,8 +109,6 @@ public enum ExceptionMessage {
 
 - 예외를 던지는 곳에서
   `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
-
-
 
 ## Util
 
@@ -369,7 +365,6 @@ public class Constants {
         return String.valueOf(cashPrize).replaceAll(Regex.CASH_PRIZE_REGEX.regex, ",");
     }
 ```
-
 
 ### Enum 클래스 관리
 
