@@ -34,18 +34,26 @@ public enum ApplicationStatus {
 ```
 public class OutputView {
 
-    private enum ConsoleMessage {
-        OUTPUT_GAME_START("게임을 시작합니다.");
+    private static final OutputView instance = new OutputView();
 
-        private final String message;
-
-        ConsoleMessage(String message) {
-            this.message = message;
-        }
+    public static OutputView getInstance(){
+        return instance;
+    }
+    private OutputView() {
     }
 
-  public void printGameStart() { 
-    System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
+    public void printGameStart() { 
+      System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
+    }
+  
+    private enum ConsoleMessage {
+      OUTPUT_GAME_START("게임을 시작합니다.");
+
+      private final String message;
+
+      ConsoleMessage(String message) {
+          this.message = message;
+      }
   }
 
 }
@@ -56,14 +64,12 @@ public class OutputView {
 ```
 public class InputView {
 
-    private enum ConsoleMessage {
-        INPUT_BUDGET("구입금액을 입력해 주세요.");
+    private static final InputView instance = new InputView();
 
-        private final String message;
-
-        ConsoleMessage(String message) {
-            this.message = message;
-        }
+    public static InputView getInstance(){
+        return instance;
+    }
+    private InputView() {
     }
 
     public int readBudget() {
@@ -72,6 +78,16 @@ public class InputView {
        // String input = Util.removeSpace(Console.readLine());
         // validate
         return Integer.parseInt(input);
+    }
+    
+        private enum ConsoleMessage {
+        INPUT_BUDGET("구입금액을 입력해 주세요.");
+
+        private final String message;
+
+        ConsoleMessage(String message) {
+            this.message = message;
+        }
     }
 }
 ```
@@ -111,6 +127,7 @@ public class GameController {
             return applicationStatus;
         }
     }
+   }
 ```
 
 ### 생명주기 관리 ver `Application`
@@ -118,11 +135,8 @@ public class GameController {
 ```
   public class Application {
     public static void main(String[] args) {
-        InputView inputView = new InputView();
-        OutputView outputView = new OutputView();
-
         ApplicationStatus applicationStatus = ApplicationStatus.INITIALIZE_APPLICATION;
-        GameController gameController = new GameController(inputView, outputView);
+        GameController gameController = new GameController(InputView.getInstance(), OutputView.getInstance());
 
         do {
             applicationStatus = gameController.progress(applicationStatus);
@@ -138,10 +152,7 @@ public class GameController {
 ```
 public class Application {
     public static void main(String[] args) {
-        InputView inputView = new InputView();
-        OutputView outputView = new OutputView();
-
-        GameController gameController = new GameController(inputView, outputView);
+        GameController gameController = new GameController(InputView.getInstance(), OutputView.getInstance());
         gameController.play();
     }
 }
