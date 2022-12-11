@@ -366,3 +366,36 @@ public class Constants {
     }
 ```
 
+
+### Enum 클래스 관리
+
+#### Command 관리!!! (사용자가 입력한 옵션)
+
+```
+public enum MainOption {
+    PAIR_MATCHING("1"),
+    PAIR_SEARCHING("2"),
+    PAIR_INITIALIZING("3"),
+    QUIT("Q");
+
+    private final String command;
+
+    MainOption(String command) {
+        this.command = command;
+    }
+
+    public static MainOption from(String command) {
+        return Arrays.stream(MainOption.values())
+                .filter(option -> option.command.equals(command))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_MAIN_OPTION.getMessage()));
+    }
+    
+    // NO_MAIN_OPTION => "해당하는 메인 옵션이 존재하지 않습니다."
+
+    public boolean continueMain() {
+        return this != QUIT;
+    }
+
+}
+```
