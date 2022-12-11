@@ -4,22 +4,9 @@
 - `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
 - `util` 패키지 안에 `validator` 패키지 생성
 
+
+
 #### Application
-
-- 만약에, 생명 주기가 걸려있다면,
-```
-public enum ApplicationStatus {
-
-    INITIAL_SETTING,
-    START_GAME,
-    END_GAME,
-    APPLICATION_EXIT;
-
-    public boolean isPlayable() {
-        return this != APPLICATION_EXIT;
-    }
-}
-```
 
 ```
 public class Application {
