@@ -309,6 +309,8 @@ public class Constants {
     }
 ```
 
+# Format 형식 맞추기 형식 Formatting
+
 ## ResultFormatter
 
 - 결과값을 출력하는 과정이 복잡할 때
