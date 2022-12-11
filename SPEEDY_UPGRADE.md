@@ -4,6 +4,8 @@
 - 최대한 뭉뚱그려서 **크게 크게 분리**한다.
 - 자잘한 한 판에서 죽고 사는 문제는 다른 `Status` 클래스를 만들어 관리하자 !!!
 - 필요하면 나중에 수정하면 된다 !!!!
+- 출력해야 하는 내용을 **view에 복붙**하면서 작성하자!!!
+
 ``` 
 public enum ApplicationStatus {
 
@@ -16,8 +18,67 @@ public enum ApplicationStatus {
         return this != APPLICATION_EXIT;
     }
 }
+```
 
+#### 패키지 나누기
 
+- `controller` `model` `util` `view` 패키지 생성
+- `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
+- `util` 패키지 안에 `validator` 패키지 생성
+
+###### 그 다음, view부터 만들자!!!
+
+#### OutputView
+
+```
+public class OutputView {
+
+    private enum ConsoleMessage {
+        OUTPUT_GAME_START("게임을 시작합니다.");
+
+        private final String message;
+
+        ConsoleMessage(String message) {
+            this.message = message;
+        }
+    }
+
+  public void printGameStart() { 
+    System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
+  }
+
+}
+```
+
+### InputView
+
+```
+public class InputView {
+
+    private enum ConsoleMessage {
+        INPUT_BUDGET("구입금액을 입력해 주세요.");
+
+        private final String message;
+
+        ConsoleMessage(String message) {
+            this.message = message;
+        }
+    }
+
+    public int readBudget() {
+        System.out.println(ConsoleMessage.INPUT_BUDGET.message);
+        String input = Console.readLine();
+       // String input = Util.removeSpace(Console.readLine());
+        // validate
+        return Integer.parseInt(input);
+    }
+}
+```
+# Controller & Application
+
+!!! 먼저 생명주기 관리 ver 쓰고 아래에 '안관리 ver' 첨부하겠음
+
+##### 생명주기 관리 ver
 
 ### 생명주기 관리 ver `GameController`
 ```
@@ -67,15 +128,6 @@ public class GameController {
 }
 ```
 
-#### 패키지 나누기
-
-- `controller` `model` `util` `view` 패키지 생성
-- `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
-- `util` 패키지 안에 `validator` 패키지 생성
-
-!!! 먼저 생명주기 관리 ver 쓰고 아래에 '안관리 ver' 첨부하겠음
-##### 생명주기 관리 ver
-
 
 ##### 생명주기 '안관리 ver'
 #### Application
@@ -112,55 +164,13 @@ public class GameController {
 }
 ```
 
-#### OutputView
 
-```
-public class OutputView {
-
-    private enum ConsoleMessage {
-        OUTPUT_GAME_START("게임을 시작합니다.");
-
-        private final String message;
-
-        ConsoleMessage(String message) {
-            this.message = message;
-        }
-    }
-
-  public void printGameStart() { 
-    System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
-  }
-
-}
-```
-
-### InputView
-
-```
-public class InputView {
-
-    private enum ConsoleMessage {
-        INPUT_BUDGET("구입금액을 입력해 주세요.");
-
-        private final String message;
-
-        ConsoleMessage(String message) {
-            this.message = message;
-        }
-    }
-
-    public int readBudget() {
-        System.out.println(ConsoleMessage.INPUT_BUDGET.message);
-        String input = Util.removeSpace(Console.readLine());
-        // validate
-        return Integer.parseInt(input);
-    }
-}
-```
 
 ### 출력 메세지 처리
 
 #### ExceptionMessage
+- 고냥 모든 Message에 사용 가능
+- 클래스 분리하지 않고 해당 클래스 안에서 `private`
 
 ```
 public enum ExceptionMessage {
@@ -183,8 +193,8 @@ public enum ExceptionMessage {
 
 - 예외를 던지는 곳에서
   `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
-
-
+- 같은 클래스 내면
+ `throw new IllegalArgumentException(ExceptionMessage.~~.message);`
 
 ## Util
 
@@ -234,16 +244,7 @@ public class Util {
 
 ```
 public abstract class Validator {
-    
-    private enum Range{
-        MIN_RANGE(3), MAX_RANGE(20);
 
-        private final int value;
-
-        Range(int value) {
-            this.value = value;
-        }
-    }
     private static final Pattern NUMBER_REGEX = Pattern.compile("^[0-9]*$");
 
     abstract void validate(String input) throws IllegalArgumentException;
@@ -272,7 +273,15 @@ public abstract class Validator {
             throw new IllegalArgumentException();
         }
     }
+    private enum Range{
+        MIN_RANGE(3), MAX_RANGE(20);
 
+        private final int value;
+
+        Range(int value) {
+            this.value = value;
+        }
+    }
 }
 ```
 
@@ -325,6 +334,10 @@ class BudgetValidatorTest {
                     .isThrownBy(() -> validator.validate(input))
                     .withMessageStartingWith(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
         }
+        
+        //   assertThatThrownBy(() -> budgetValidator.validate(input))
+        //            .isInstanceOf(IllegalArgumentException.class)
+        //            .hasMessage(ExceptionMessage.OUT_OF_RANGE.getMessage());
 
         
         @ParameterizedTest
@@ -332,7 +345,7 @@ class BudgetValidatorTest {
         @DisplayName("int 범위를 초과한 입력의 경우 예외 처리한다.")
         void int_범위를_벗어난_입력(String input) {
             assertThatIllegalArgumentException()
-                    .isThrownBy(() -> validator.validate(input))
+                    .isThrownBy(() -> budgetValidator.validate(input))
                     .withMessageStartingWith(ExceptionMessage.INVALID_OUT_OF_INT_RANGE.getMessage());
         }
 
