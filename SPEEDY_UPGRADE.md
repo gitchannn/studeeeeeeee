@@ -34,6 +34,14 @@ public enum ApplicationStatus {
 ```
 public class OutputView {
 
+        private static final OutputView instance = new OutputView();
+
+    public static OutputView getInstance(){
+        return instance;
+    }
+    private OutputView() {
+    }
+
   public void printGameStart() {
     System.out.println(Message.OUTPUT_GAME_START.message);
   }
@@ -60,6 +68,14 @@ public class OutputView {
 
 ```
 public class InputView {
+
+     private static final InputView instance = new InputView();
+
+    public static InputView getInstance(){
+        return instance;
+    }
+    private InputView() {
+    }
 
     public int readBudget() {
         System.out.println(Message.INPUT_BUDGET.message);
