@@ -33,20 +33,25 @@ public enum ApplicationStatus {
 
 ```
 public class OutputView {
-
-    private enum ConsoleMessage {
+    
+  public void printGameStart() { 
+    System.out.println(Message.OUTPUT_GAME_START.message);
+  }
+  
+    public void printExceptionMessage(IllegalArgumentException exception) {
+        System.out.println(exception.getMessage());
+    }
+  
+  private enum Message {
         OUTPUT_GAME_START("게임을 시작합니다.");
 
         private final String message;
 
-        ConsoleMessage(String message) {
+        Message(String message) {
             this.message = message;
         }
     }
 
-  public void printGameStart() { 
-    System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
-  }
 
 }
 ```
@@ -56,22 +61,22 @@ public class OutputView {
 ```
 public class InputView {
 
-    private enum ConsoleMessage {
-        INPUT_BUDGET("구입금액을 입력해 주세요.");
-
-        private final String message;
-
-        ConsoleMessage(String message) {
-            this.message = message;
-        }
-    }
-
     public int readBudget() {
-        System.out.println(ConsoleMessage.INPUT_BUDGET.message);
+        System.out.println(Message.INPUT_BUDGET.message);
         String input = Console.readLine();
        // String input = Util.removeSpace(Console.readLine());
         // validate
         return Integer.parseInt(input);
+    }
+    
+     private enum Message {
+        INPUT_BUDGET("구입금액을 입력해 주세요.");
+
+        private final String message;
+
+        Message(String message) {
+            this.message = message;
+        }
     }
 }
 ```
