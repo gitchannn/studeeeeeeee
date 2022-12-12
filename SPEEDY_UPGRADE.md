@@ -7,7 +7,7 @@
 - 필요하면 나중에 수정하면 된다 !!!!
 - 출력해야 하는 내용을 **view에 복붙**하면서 작성하자!!!
 
-``` 
+```
 public enum ApplicationStatus {
 
     INITIALIZE_APPLICATION,
@@ -34,27 +34,24 @@ public enum ApplicationStatus {
 ```
 public class OutputView {
 
-    private static final OutputView instance = new OutputView();
-
-    public static OutputView getInstance(){
-        return instance;
-    }
-    private OutputView() {
-    }
-
-    public void printGameStart() { 
-      System.out.println(ConsoleMessage.OUTPUT_GAME_START.message);
-    }
-  
-    private enum ConsoleMessage {
-      OUTPUT_GAME_START("게임을 시작합니다.");
-
-      private final String message;
-
-      ConsoleMessage(String message) {
-          this.message = message;
-      }
+  public void printGameStart() {
+    System.out.println(Message.OUTPUT_GAME_START.message);
   }
+
+    public void printExceptionMessage(IllegalArgumentException exception) {
+        System.out.println(exception.getMessage());
+    }
+
+  private enum Message {
+        OUTPUT_GAME_START("게임을 시작합니다.");
+
+        private final String message;
+
+        Message(String message) {
+            this.message = message;
+        }
+    }
+
 
 }
 ```
@@ -64,28 +61,20 @@ public class OutputView {
 ```
 public class InputView {
 
-    private static final InputView instance = new InputView();
-
-    public static InputView getInstance(){
-        return instance;
-    }
-    private InputView() {
-    }
-
     public int readBudget() {
-        System.out.println(ConsoleMessage.INPUT_BUDGET.message);
+        System.out.println(Message.INPUT_BUDGET.message);
         String input = Console.readLine();
        // String input = Util.removeSpace(Console.readLine());
         // validate
         return Integer.parseInt(input);
     }
-    
-        private enum ConsoleMessage {
+
+     private enum Message {
         INPUT_BUDGET("구입금액을 입력해 주세요.");
 
         private final String message;
 
-        ConsoleMessage(String message) {
+        Message(String message) {
             this.message = message;
         }
     }
@@ -213,7 +202,7 @@ public enum ExceptionMessage {
 
 - 필요한 것만 골라다 쓰자!
 
-``` 
+```
 public class Util {
 
     public static String removeSpace(String input) {
@@ -282,7 +271,7 @@ public abstract class Validator {
 
     void validateNumberRange(String input) {
         int number = Integer.parseInt(input);
-        if (number < Range.MIN_RANGE.value || number > Range.MIN_RANGE.value) {
+        if (number < Range.MIN_RANGE.value || number > Range.MAX_RANGE.value) {
             throw new IllegalArgumentException();
         }
     }
@@ -324,7 +313,7 @@ public class BridgeSizeValidator extends Validator {
 ```
 
 - 테스트 코드도 동시에 작성
-    - `removeSpace`는 `inputView`에서 이미 행하고 나서 들어오는 것이기 때문에 여기서는 공백 제거를 테스트하면 안됨
+  - `removeSpace`는 `inputView`에서 이미 행하고 나서 들어오는 것이기 때문에 여기서는 공백 제거를 테스트하면 안됨
 
 ```
 class BudgetValidatorTest {
@@ -347,12 +336,12 @@ class BudgetValidatorTest {
                     .isThrownBy(() -> validator.validate(input))
                     .withMessageStartingWith(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
         }
-        
+
         //   assertThatThrownBy(() -> budgetValidator.validate(input))
         //            .isInstanceOf(IllegalArgumentException.class)
         //            .hasMessage(ExceptionMessage.OUT_OF_RANGE.getMessage());
 
-        
+
         @ParameterizedTest
         @ValueSource(strings = {"2222222222222222222222222222000", "1294013905724312349120948120000"})
         @DisplayName("int 범위를 초과한 입력의 경우 예외 처리한다.")
@@ -382,7 +371,7 @@ class BudgetValidatorTest {
 - 다양한 자료형의 상수가 모여있다면 `Enum`을 활용하기 어려움
 - 한 클래스가 아니라 여러 클래스에서 사용되는 상수의 경우 따로 클래스를 만들자!
 
-``` 
+```
 public class Constants {
 
     public static final int NUMBER_COUNT = 6;
@@ -398,7 +387,7 @@ public class Constants {
 
 ### `MapPractice` 을 key, value (키, 값) 순으로 출력하기
 
-``` 
+```
     Map<Integer, Integer> map = new HashMap<>();
     map.put(100, 1);
     map.put(200, 2);
@@ -424,7 +413,7 @@ public class Constants {
 
 - 소수점 아래 둘째 자리에서 반올림 `1.35 => 1.4`
 
-``` 
+```
     private static BigDecimal getSetScale(BigDecimal rewardRate) {
         return rewardRate.setScale(1, RoundingMode.HALF_EVEN);
     }
@@ -432,7 +421,7 @@ public class Constants {
 
 - 퍼센트 구하기 `totalCashPrize / ticketBudget * 100` + 소수점 아래 둘째 자리에서 반올림
 
-``` 
+```
  private static BigDecimal calculatePercent(BigDecimal totalCashPrize, BigDecimal ticketBudget) {
         if (ticketBudget.equals(BigDecimal.ZERO)) {
             return BigDecimal.ZERO;
@@ -443,9 +432,9 @@ public class Constants {
 
 - 이외의 `REGEX`를 활용한 `formatting`
 
-``` 
+```
    private enum Regex {
-        CASH_PRIZE_REGEX("\\B(?=(\\d{3})+(?!\\d))"), 
+        CASH_PRIZE_REGEX("\\B(?=(\\d{3})+(?!\\d))"),
         DECIMAL_FORMAT("#,##0.0");
 
         private final String regex;
@@ -489,7 +478,7 @@ public enum MainOption {
                 .findAny()
                 .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_MAIN_OPTION.getMessage()));
     }
-    
+
     // NO_MAIN_OPTION => "해당하는 메인 옵션이 존재하지 않습니다."
 
     public boolean continueMain() {
