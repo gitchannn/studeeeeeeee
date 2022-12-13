@@ -3,21 +3,36 @@
 ### 기능 목록을 작성할 때
 
 - 최대한 뭉뚱그려서 **크게 크게 분리**한다.
-- 자잘한 한 판에서 죽고 사는 문제는 다른 `Status` 클래스를 만들어 관리하자 !!!
+- 자잘한 한 판에서 죽고 사는 문제는 다른 `Status` 또는 `MainOption` 클래스를 만들어 관리하자 !!!
 - 필요하면 나중에 수정하면 된다 !!!!
-- 출력해야 하는 내용을 **view에 복붙**하면서 작성하자!!!
+- 출력해야 하는 내용을 **`view`에 복붙**하면서 작성하자!!!
 
 ```
-public enum ApplicationStatus {
+public enum MainOption {
 
-    INITIALIZE_APPLICATION,
-    START_GAME,
-    END_GAME,
-    APPLICATION_EXIT;
+    ORDER_REGISTRATION("1"),
+    PAYMENT("2"),
+    APPLICATION_EXIT("3");
+
+    private final String command;
+
+    MainOption(String command) {
+        this.command = command;
+    }
 
     public boolean isPlayable() {
         return this != APPLICATION_EXIT;
     }
+
+    public static MainOption from(String command) {
+        return Arrays.stream(MainOption.values())
+                .filter(option -> option.command.equals(command))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_MAIN_OPTION.getMessage()));
+    }
+    
+    //  NO_MAIN_OPTION("해당 메인 옵션이 존재하지 않습니다."),
+
 }
 ```
 
@@ -27,21 +42,25 @@ public enum ApplicationStatus {
 - `util` 패키지 안에 `Util` 클래스 생성 (여러번 사용되는 것들)
 - `util` 패키지 안에 `validator` 패키지 생성
 
-###### 그 다음, view부터 만들자!!!
+---
+
+###### 그 다음, `view`부터 만들자!!!
 
 #### OutputView
 
 ```
 public class OutputView {
 
-        private static final OutputView instance = new OutputView();
+  private static final OutputView instance = new OutputView();
 
-    public static OutputView getInstance(){
-        return instance;
-    }
-    private OutputView() {
-    }
-
+  public static OutputView getInstance(){
+      return instance;
+  }
+  private OutputView() {
+  }
+  
+    // static이면 이 위에 지우고 아래를 static으로 만들면됨
+    
   public void printGameStart() {
     System.out.println(Message.OUTPUT_GAME_START.message);
   }
@@ -76,6 +95,8 @@ public class InputView {
     }
     private InputView() {
     }
+    
+    // static이면 이 위에 지우고 아래를 static으로 만들면됨
 
     public int readBudget() {
         System.out.println(Message.INPUT_BUDGET.message);
@@ -97,58 +118,11 @@ public class InputView {
 }
 ```
 
+---
+
 # Controller & Application
 
-!!! 먼저 생명주기 관리 ver 쓰고 아래에 '안관리 ver' 첨부하겠음
-
-##### 생명주기 관리 ver
-
-### 생명주기 관리 ver `GameController`
-
-```
-public class GameController {
-    private final InputView inputView;
-    private final OutputView outputView;
-    private final Map<ApplicationStatus, Supplier<ApplicationStatus>> gameGuide;
-
-    public GameController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-        this.gameGuide = new EnumMap<>(ApplicationStatus.class);
-        initializeGameGuide();
-    }
-
-    private void initializeGameGuide() {
-        gameGuide.put(ApplicationStatus.INITIALIZE_APPLICATION, this::initialSetting);
-        gameGuide.put(ApplicationStatus.START_GAME, this::startGame);
-        gameGuide.put(ApplicationStatus.END_GAME, this::endGame);
-    }
-
-    public ApplicationStatus progress(ApplicationStatus applicationStatus) {
-        try {
-            return gameGuide.get(applicationStatus).get();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-            return applicationStatus;
-        }
-    }
-   }
-```
-
-### 생명주기 관리 ver `Application`
-
-```
-  public class Application {
-    public static void main(String[] args) {
-        ApplicationStatus applicationStatus = ApplicationStatus.INITIALIZE_APPLICATION;
-        GameController gameController = new GameController(InputView.getInstance(), OutputView.getInstance());
-
-        do {
-            applicationStatus = gameController.progress(applicationStatus);
-        } while (applicationStatus.isPlayable());
-    }
-}
-```
+!!! 먼저 `안관리 ver` 쓰고 아래에 `생명주기 관리 ver` 첨부하겠음
 
 ##### 생명주기 '안관리 ver'
 
@@ -157,22 +131,166 @@ public class GameController {
 ```
 public class Application {
     public static void main(String[] args) {
-        GameController gameController = new GameController(InputView.getInstance(), OutputView.getInstance());
-        gameController.play();
+        MainController mainController = new MainController(InputView.getInstance(), OutputView.getInstance());
+        mainController.service();
     }
 }
 ```
 
-#### GameController
+- 만약 View의 메서드가 `static`이라면??
 
-- 게임에 필요한 다른 변수들이 많으면 `GameVariable` 클래스 생성을 고려한다.
+``` 
+public class Application {
+    public static void main(String[] args) {
+        MainController mainController = new MainController();
+        mainController.service();
+    }
+}
+```
+
+#### MainController
+
+- 일단은 전체 `MainController`에 만들고 나중에 필요하면 다른 Controller를 만들어서 분리하자
+- 게임에 필요한 다른 변수들이 많으면 `MainVariable` 클래스 생성을 고려한다.
+
+#### Controller를 따로 만들어 관리하기
+
+1. `Controllable` 인터페이스 만들기
+
+``` 
+@FunctionalInterface
+public interface Controllable {
+    void process();
+}
 
 ```
-public class GameController {
+
+2. 하위 `Controller` 만들기
+
+예시.
+
+``` 
+public class OrderRegistrationController implements Controllable {
+
     private final InputView inputView;
     private final OutputView outputView;
 
-    public GameController(InputView inputView, OutputView outputView) {
+    // View를 인자로 넘기냐에 따라 다름
+    public OrderRegistrationController(InputView inputView, OutputView outputView) {
+        this.inputView = inputView;
+        this.outputView = outputView;
+    }
+
+    @Override
+    public void process() {
+        selectTable().addOrder(selectMenu(), selectMenuQuantity());
+    }
+
+    private int selectMenuQuantity() {
+        return inputView.readMenuQuantity();
+    }
+
+    private Menu selectMenu() {
+        outputView.printMenus(MenuRepository.menus());
+        return inputView.readMenu();
+    }
+
+    private Table selectTable() {
+        outputView.printTables(TableRepository.tables());
+        return inputView.inputTableNumber();
+    }
+}
+```
+
+##### 1. `View`를 parameter로 받지 않는 경우 = `View`의 메서드가 `static`인 ver.
+
+``` 
+public class MainController {
+    // 컨트롤러를 따로 만들거 아니면 Runnable로 관리 + 아래에 void 함수
+    private final Map<MainOption, Controllable> controllers;
+
+    public MainController() {
+        this.controllers = new EnumMap<>(MainOption.class);
+        initializeGameGuide();
+    }
+
+    private void initializeGameGuide() {
+        controllers.put(MainOption.ORDER_REGISTRATION, new OrderRegistrationController());
+        controllers.put(MainOption.PAYMENT, new PaymentController());
+        controllers.put(MainOption.APPLICATION_EXIT, new ApplicationExitController());
+    }
+
+
+    public void service() {
+        MainOption mainOption;
+        do {
+            OutputView.printMainScreen();
+            mainOption = InputView.readMainOption();
+            progress(mainOption);
+        } while (mainOption.isPlayable());
+    }
+
+    public void progress(MainOption mainOption) {
+        try {
+            controllers.get(mainOption).process();
+        } catch (IllegalArgumentException exception) {
+            OutputView.printExceptionMessage(exception);
+        }
+    }
+
+}
+```
+
+##### 2. `View`를 parameter로 받는 ver.
+
+``` 
+public class MainController {
+    private final Map<MainOption, Controllable> controllers;
+    private final InputView inputView;
+    private final OutputView outputView;
+
+    public MainController(InputView inputView, OutputView outputView) {
+        this.inputView = inputView;
+        this.outputView = outputView;
+        this.controllers = new EnumMap<>(MainOption.class);
+        initializeControllers();
+    }
+
+    private void initializeControllers() {
+        controllers.put(MainOption.ORDER_REGISTRATION, new OrderRegistrationController(inputView, outputView));
+        controllers.put(MainOption.PAYMENT, new PaymentController(inputView, outputView));
+        controllers.put(MainOption.APPLICATION_EXIT, new ApplicationExitController(inputView, outputView));
+    }
+
+
+    public void service() {
+        MainOption mainOption;
+        do {
+            outputView.printMainScreen();
+            mainOption = inputView.readMainOption();
+            progress(mainOption);
+        } while (mainOption.isPlayable());
+    }
+
+    public void progress(MainOption mainOption) {
+        try {
+            controllers.get(mainOption).process();
+        } catch (IllegalArgumentException exception) {
+            outputView.printExceptionMessage(exception);
+        }
+    }
+
+}
+```
+
+##### 3. 아무런 리팩터링도 고려하지 않은 간단 ver.
+
+```
+public class MainController {
+    private final InputView inputView;
+    private final OutputView outputView;
+
+    public MainController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
         this.outputView = outputView;
     }
@@ -182,6 +300,8 @@ public class GameController {
     }
 }
 ```
+
+---
 
 ### 출력 메세지 처리
 
@@ -329,7 +449,7 @@ public class BridgeSizeValidator extends Validator {
 ```
 
 - 테스트 코드도 동시에 작성
-  - `removeSpace`는 `inputView`에서 이미 행하고 나서 들어오는 것이기 때문에 여기서는 공백 제거를 테스트하면 안됨
+    - `removeSpace`는 `inputView`에서 이미 행하고 나서 들어오는 것이기 때문에 여기서는 공백 제거를 테스트하면 안됨
 
 ```
 class BudgetValidatorTest {
