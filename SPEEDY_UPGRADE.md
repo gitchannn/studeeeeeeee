@@ -65,7 +65,7 @@ public class OutputView {
     System.out.println(Message.OUTPUT_GAME_START.message);
   }
 
-    public void printExceptionMessage(IllegalArgumentException exception) {
+    public void printExceptionMessage(Exception exception) {
         System.out.println(exception.getMessage());
     }
 
