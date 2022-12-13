@@ -1,5 +1,9 @@
 ``` 
 public class Crews {
+    
+    private Crews() {
+    }
+
     private static final List<Crew> crews = new ArrayList<>();
 
     public static List<Crew> crews() {
@@ -22,9 +26,8 @@ public class Crews {
         return crews.stream()
                 .filter(crew -> crew.getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException();
+                .orElseThrow(() -> new IllegalArgumentException());
     }
 
 }
-
 ```
