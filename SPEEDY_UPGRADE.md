@@ -429,10 +429,6 @@ public abstract class Validator {
 
     abstract void validate(String input) throws IllegalArgumentException;
 
-    static String removeSpace(String input) {
-        return input.replaceAll(" ", "");
-    }
-
        void validateNumeric(String input) {
         if (!NUMBER_REGEX.matcher(input).matches()) {
             throw new IllegalArgumentException(ExceptionMessage.INVALID_NOT_NUMERIC.getMessage());
