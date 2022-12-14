@@ -65,7 +65,7 @@ public class OutputView {
     System.out.println(Message.OUTPUT_GAME_START.message);
   }
 
-    public void printExceptionMessage(Exception exception) {
+    public void printExceptionMessage(IllegalArgumentException exception) {
         System.out.println(exception.getMessage());
     }
 
@@ -153,47 +153,6 @@ public class Application {
 
 - 일단은 전체 `MainController`에 만들고 나중에 필요하면 다른 Controller를 만들어서 분리하자
 - 게임에 필요한 다른 변수들이 많으면 `MainVariable` 클래스 생성을 고려한다.
-
-
-#### 처음에는 메서드로 나누고 나중에 Controller로 나눈다.
-
-``` 
-public class MainController {
-    private final InputView inputView;
-    private final OutputView outputView;
-    private final Map<ApplicationStatus, Runnable> controllers;
-
-    public MainController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-        this.controllers = new EnumMap<>(ApplicationStatus.class);
-        initializeControllers();
-    }
-
-    private void initializeControllers() {
-        controllers.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
-    }
-
-    public void service() {
-
-    }
-
-    private void crewLoading() {
-
-    }
-
-
-    public void progress(ApplicationStatus applicationStatus) {
-        try {
-            controllers.get(applicationStatus).run();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
-    }
-
-
-}
-```
 
 #### Controller를 따로 만들어 관리하기
 
