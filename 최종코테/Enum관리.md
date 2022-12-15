@@ -1,6 +1,4 @@
-#### 1. Stream을 통해서 변환 (1 => U, 0 => D)
-
-- Enum 설정
+## Enum 관리
 
 ``` 
 public enum BridgeSign {

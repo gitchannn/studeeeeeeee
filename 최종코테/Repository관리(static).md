@@ -2,7 +2,7 @@
 public class Crews {
     
     private Crews() {
-    }
+    } // 선택
 
     private static final List<Crew> crews = new ArrayList<>();
 

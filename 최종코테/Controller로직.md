@@ -1,16 +1,25 @@
-## 우테코 최종 코딩테스트 가이드라인
+## 우테코 최종 코딩테스트 가이드라인 for Controller 로직
 
 ### 목차
 
-## 0. 요구사항 읽고 기능 목록 작성 (중요한건 **bold**~)
+## 요구사항 읽고 기능 목록 작성 (중요한건 **bold**~)
 
     - 게임형: `ApplicationStatus` (크게크게) VS 옵션 선택형: `MainOption` (명시적으로)
     - 각각 `enum` 이름 생각해놓기
     - 아래에 따라 `View` 작성하면서 기능 목록 써도 좋음
 
-- [1. 초기 설정](#1.-초기-설정)
+### Application 만들어놓기
 
-## 1. `Controller` 로직 결정
+``` 
+public class Application {
+    public static void main(String[] args) {
+            MainController mainController = new MainController(InputView.getInstance(), OutputView.getInstance());
+            mainController.service();
+    }
+}
+```
+
+### `Controller` 로직 결정
 
 - [`BridgeGame`] 다양하게 상황에 따라 게임이 얽히고 설켜 복잡한 플로우차트 => [`Supplier` 로직](#로직-supplier)으로!
     - 플로우차트를 먼저 구상한 뒤에 그것과 똑같이 만들면 안정적임!!!
@@ -81,7 +90,7 @@ public class MainController {
 - 미리 분리하는게 복잡도를 줄여서 편안함
 - 이 경우, 검증 로직이 포함되므로 `MainOption`은 분리해서 `public enum`으로 다루자!
 
-- `Controllable` 인터페이스 생성
+- Controllable 인터페이스 생성
 
 ``` 
 @FunctionalInterface
@@ -90,13 +99,67 @@ public interface Controllable {
 }
 ```
 
+- 하위 Controller 만들기 (예시)
+
+``` 
+public class OrderRegistrationController implements Controllable {
+
+    private final InputView inputView;
+    private final OutputView outputView;
+
+    // View를 인자로 넘기냐에 따라 다름
+    public OrderRegistrationController(InputView inputView, OutputView outputView) {
+        this.inputView = inputView;
+        this.outputView = outputView;
+    }
+
+    @Override
+    public void process() {
+     // 작성 => 이 controller도 controller 로직을 적용해도 좋음! 
+    }
+
+}
+```
+
+- MainOption 생성
+
+```
+public enum MainOption {
+
+    ORDER_REGISTRATION("1"),
+    PAYMENT("2"),
+    APPLICATION_EXIT("3");
+
+    private final String command;
+
+    MainOption(String command) {
+        this.command = command;
+    }
+
+    public boolean isPlayable() {
+        return this != APPLICATION_EXIT;
+    }
+
+    public static MainOption from(String command) {
+        return Arrays.stream(MainOption.values())
+                .filter(option -> option.command.equals(command))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_MAIN_OPTION.getMessage()));
+    }
+    
+    //  "해당 메인 옵션이 존재하지 않습니다."
+
+}
+```
+
 - MainController에서 Controller switch 조절
 
 ``` 
+
 public class MainController {
-    private final Map<MainOption, Controllable> controllers;
-    private final InputView inputView;
-    private final OutputView outputView;
+private final Map<MainOption, Controllable> controllers;
+private final InputView inputView;
+private final OutputView outputView;
 
     public MainController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
@@ -126,15 +189,55 @@ public class MainController {
             outputView.printExceptionMessage(exception);
         }
     }
-
 }
 ```
+
+## 로직 runnable
+
+``` 
+
+public class MainController {
+private final InputView inputView;
+private final OutputView outputView;
+private final Map<ApplicationStatus, Runnable> gameGuide;
+
+    public MainController(InputView inputView, OutputView outputView) {
+        this.inputView = inputView;
+        this.outputView = outputView;
+        this.gameGuide = new EnumMap<>(ApplicationStatus.class);
+        initializeControllers();
+    }
+
+    private void initializeControllers() {
+        gameGuide.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
+    }
+
+    public void service() {
+        progress(ApplicationStatus.CREW_LOADING);
+    }
+
+    public void progress(ApplicationStatus applicationStatus) {
+        try {
+            controllers.get(applicationStatus).run();
+        } catch (IllegalArgumentException exception) {
+            outputView.printExceptionMessage(exception);
+        }
+    }
+
+    private void crewLoading() {
+    // 코드 작성
+    }
+}
+```
+
+---
 
 ## repository
 
 ``` 
+
 public class Crews {
-    
+
     private Crews() {
     } // 선택
 
@@ -162,41 +265,7 @@ public class Crews {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException());
     }
+
 }
-```
 
-## 로직 runnable
-
-``` 
-public class MainController {
-    private final InputView inputView;
-    private final OutputView outputView;
-    private final Map<ApplicationStatus, Runnable> gameGuide;
-
-    public MainController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-        this.gameGuide = new EnumMap<>(ApplicationStatus.class);
-        initializeControllers();
-    }
-
-    private void initializeControllers() {
-        gameGuide.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
-    }
-
-    public void service() {
-        progress(ApplicationStatus.CREW_LOADING);
-    }
-
-    public void progress(ApplicationStatus applicationStatus) {
-        try {
-            controllers.get(applicationStatus).run();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
-    }
-
-    private void crewLoading() {
-    }
-}
 ```

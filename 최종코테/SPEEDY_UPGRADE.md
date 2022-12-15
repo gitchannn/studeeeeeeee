@@ -2,39 +2,13 @@
 
 ### 기능 목록을 작성할 때
 
-- 최대한 뭉뚱그려서 **크게 크게 분리**한다.
-- 자잘한 한 판에서 죽고 사는 문제는 다른 `Status` 또는 `MainOption` 클래스를 만들어 관리하자 !!!
-- 필요하면 나중에 수정하면 된다 !!!!
-- 출력해야 하는 내용을 **`view`에 복붙**하면서 작성하자!!!
+- 복잡한 문제라면 **플로우차트**를 그린다
+- 어떤 클래스가 어떤 데이터를 담아야 하는지 **코드 짜기 _전에_ 생각한다!!!**
+- `Status` 만들 때는 최대한 뭉뚱그려서 **크게 크게 분리**한다!!!
+- 가능하면 출력해야 하는 내용을 **`view`에 복붙**하면서 작성하자!!! => 집착은 X
 
-```
-public enum MainOption {
-
-    ORDER_REGISTRATION("1"),
-    PAYMENT("2"),
-    APPLICATION_EXIT("3");
-
-    private final String command;
-
-    MainOption(String command) {
-        this.command = command;
-    }
-
-    public boolean isPlayable() {
-        return this != APPLICATION_EXIT;
-    }
-
-    public static MainOption from(String command) {
-        return Arrays.stream(MainOption.values())
-                .filter(option -> option.command.equals(command))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_MAIN_OPTION.getMessage()));
-    }
-    
-    //  NO_MAIN_OPTION("해당 메인 옵션이 존재하지 않습니다."),
-
-}
-```
+- 문제의 분위기를 보고, Controller 형태를 결정한다 => `Controller로직`에서 설정!!!
+- Controller 에러를 없애려면 `view`를 만들어야 함
 
 #### 패키지 나누기
 
@@ -154,178 +128,9 @@ public class Application {
 - 일단은 전체 `MainController`에 만들고 나중에 필요하면 다른 Controller를 만들어서 분리하자
 - 게임에 필요한 다른 변수들이 많으면 `MainVariable` 클래스 생성을 고려한다.
 
+- `Controller로직.md`를 참고하자
 
-#### 처음에는 메서드로 나누고 나중에 Controller로 나눈다.
-
-``` 
-public class MainController {
-    private final InputView inputView;
-    private final OutputView outputView;
-    private final Map<ApplicationStatus, Runnable> controllers;
-
-    public MainController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-        this.controllers = new EnumMap<>(ApplicationStatus.class);
-        initializeControllers();
-    }
-
-    private void initializeControllers() {
-        controllers.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
-    }
-
-    public void service() {
-
-    }
-
-    private void crewLoading() {
-
-    }
-
-
-    public void progress(ApplicationStatus applicationStatus) {
-        try {
-            controllers.get(applicationStatus).run();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
-    }
-
-
-}
-```
-
-#### Controller를 따로 만들어 관리하기
-
-1. `Controllable` 인터페이스 만들기
-
-``` 
-@FunctionalInterface
-public interface Controllable {
-    void process();
-}
-
-```
-
-2. 하위 `Controller` 만들기
-
-예시.
-
-``` 
-public class OrderRegistrationController implements Controllable {
-
-    private final InputView inputView;
-    private final OutputView outputView;
-
-    // View를 인자로 넘기냐에 따라 다름
-    public OrderRegistrationController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-    }
-
-    @Override
-    public void process() {
-        selectTable().addOrder(selectMenu(), selectMenuQuantity());
-    }
-
-    private int selectMenuQuantity() {
-        return inputView.readMenuQuantity();
-    }
-
-    private Menu selectMenu() {
-        outputView.printMenus(MenuRepository.menus());
-        return inputView.readMenu();
-    }
-
-    private Table selectTable() {
-        outputView.printTables(TableRepository.tables());
-        return inputView.inputTableNumber();
-    }
-}
-```
-
-##### 1. `View`를 parameter로 받지 않는 경우 = `View`의 메서드가 `static`인 ver.
-
-``` 
-public class MainController {
-    // 컨트롤러를 따로 만들거 아니면 Runnable로 관리 + 아래에 void 함수
-    private final Map<MainOption, Controllable> controllers;
-
-    public MainController() {
-        this.controllers = new EnumMap<>(MainOption.class);
-        initializeGameGuide();
-    }
-
-    private void initializeGameGuide() {
-        controllers.put(MainOption.ORDER_REGISTRATION, new OrderRegistrationController());
-        controllers.put(MainOption.PAYMENT, new PaymentController());
-        controllers.put(MainOption.APPLICATION_EXIT, new ApplicationExitController());
-    }
-
-
-    public void service() {
-        MainOption mainOption;
-        do {
-            OutputView.printMainScreen();
-            mainOption = InputView.readMainOption();
-            progress(mainOption);
-        } while (mainOption.isPlayable());
-    }
-
-    public void progress(MainOption mainOption) {
-        try {
-            controllers.get(mainOption).process();
-        } catch (IllegalArgumentException exception) {
-            OutputView.printExceptionMessage(exception);
-        }
-    }
-
-}
-```
-
-##### 2. `View`를 parameter로 받는 ver.
-
-``` 
-public class MainController {
-    private final Map<MainOption, Controllable> controllers;
-    private final InputView inputView;
-    private final OutputView outputView;
-
-    public MainController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-        this.controllers = new EnumMap<>(MainOption.class);
-        initializeControllers();
-    }
-
-    private void initializeControllers() {
-        controllers.put(MainOption.ORDER_REGISTRATION, new OrderRegistrationController(inputView, outputView));
-        controllers.put(MainOption.PAYMENT, new PaymentController(inputView, outputView));
-        controllers.put(MainOption.APPLICATION_EXIT, new ApplicationExitController(inputView, outputView));
-    }
-
-
-    public void service() {
-        MainOption mainOption;
-        do {
-            outputView.printMainScreen();
-            mainOption = inputView.readMainOption();
-            progress(mainOption);
-        } while (mainOption.isPlayable());
-    }
-
-    public void progress(MainOption mainOption) {
-        try {
-            controllers.get(mainOption).process();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
-    }
-
-}
-```
-
-##### 3. 아무런 리팩터링도 고려하지 않은 간단 ver.
+##### 아무런 리팩터링도 고려하지 않은 간단 ver.
 
 ```
 public class MainController {
@@ -337,7 +142,7 @@ public class MainController {
         this.outputView = outputView;
     }
 
-    public void play() {
+    public void service() {
         outputView.printGameStart();
     }
 }
@@ -465,23 +270,10 @@ public abstract class Validator {
 
 ```
 public class BridgeSizeValidator extends Validator {
-    private enum Range {
-        MIN_RANGE(3), MAX_RANGE(20);
-
-        private final int value;
-
-        Range(int value) {
-            this.value = value;
-        }
-    }
-
-    private static final Pattern NUMBER_REGEX = Pattern.compile("^[0-9]*$");
 
     @Override
     public void validate(String input) throws IllegalArgumentException {
-        validateNumeric(input);
-        validateRange(input);
-        validateNumberRange(input);
+       // 검증 로직 작성
     }
 
 ```
@@ -503,7 +295,7 @@ class BudgetValidatorTest {
     class invalidInputTest {
 
         @ParameterizedTest
-        @ValueSource(strings = {"한글", "moonja", " -1000 ", "-2322190000"})
+        @ValueSource(strings = {"한글", "moonja", "-1000", "-2322190000"})
         @DisplayName("자연수가 아닌 입력의 경우 예외 처리한다.")
         void 자연수가_아닌_입력(String input) {
             assertThatIllegalArgumentException()
@@ -570,64 +362,6 @@ public class Constants {
     }
 ```
 
-## ResultFormatter
-
-- 결과값을 출력하는 과정이 복잡할 때
-- 결과값을 formatting하는 일을 model이 하는 것은 부적절, view에서 하기에도 클 수 있다.
-
-### 큰 숫자 다루기 `BigDecimal`
-
-- 소수점, 반올림을 빡세게 요구할 때
-- 너무 복잡한 수나, 아니면 돈을 다루는 경우에 바로 사용하자!
-- 퍼센트를 구한 다음에 `1,000.3%` 꼴로 출력하자
-- `ArithmeticException`을 조심하자!
-
-- dividend, divisor, quotient
-  ![img.png](img.png)
-
-- 소수점 아래 둘째 자리에서 반올림 `1.35 => 1.4`
-
-```
-    private static BigDecimal getSetScale(BigDecimal rewardRate) {
-        return rewardRate.setScale(1, RoundingMode.HALF_EVEN);
-    }
-```
-
-- 퍼센트 구하기 `totalCashPrize / ticketBudget * 100` + 소수점 아래 둘째 자리에서 반올림
-
-```
- private static BigDecimal calculatePercent(BigDecimal totalCashPrize, BigDecimal ticketBudget) {
-        if (ticketBudget.equals(BigDecimal.ZERO)) {
-            return BigDecimal.ZERO;
-        }
-        return totalCashPrize.multiply(new BigDecimal("100")).divide(ticketBudget, 1, RoundingMode.HALF_EVEN);
-    }
-```
-
-- 이외의 `REGEX`를 활용한 `formatting`
-
-```
-   private enum Regex {
-        CASH_PRIZE_REGEX("\\B(?=(\\d{3})+(?!\\d))"),
-        DECIMAL_FORMAT("#,##0.0");
-
-        private final String regex;
-
-        Regex(String regex) {
-            this.regex = regex;
-        }
-    }
-
-    // 12345 => 12,345
-    public static String formatRewardRate(BigDecimal rewardRate) {
-        return new DecimalFormat(Regex.DECIMAL_FORMAT.regex).format(rewardRate);
-    }
-
-    // 324329209.35823 => 324,329,209.4
-    private static String formatCashPrize(int cashPrize) {
-        return String.valueOf(cashPrize).replaceAll(Regex.CASH_PRIZE_REGEX.regex, ",");
-    }
-```
 
 ### Enum 클래스 관리
 
