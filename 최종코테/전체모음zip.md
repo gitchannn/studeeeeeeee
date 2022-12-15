@@ -107,9 +107,6 @@ public class InputView {
 
 # Controller & Application
 
-!!! 먼저 `안관리 ver` 쓰고 아래에 `생명주기 관리 ver` 첨부하겠음
-
-##### 생명주기 '안관리 ver'
 
 #### Application
 
@@ -122,23 +119,12 @@ public class Application {
 }
 ```
 
-- 만약 View의 메서드가 `static`이라면??
-
-``` 
-public class Application {
-    public static void main(String[] args) {
-        MainController mainController = new MainController();
-        mainController.service();
-    }
-}
-```
-
 #### MainController
 
 - 일단은 전체 `MainController`에 만들고 나중에 필요하면 다른 Controller를 만들어서 분리하자
 - 게임에 필요한 다른 변수들이 많으면 `MainVariable` 클래스 생성을 고려한다.
 
-- `Controller로직.md`를 참고하자
+- [Controller 로직](#로직-controller)를 참고하자
 
 ##### 아무런 리팩터링도 고려하지 않은 간단 ver.
 
