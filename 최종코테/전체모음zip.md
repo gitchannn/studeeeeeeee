@@ -107,14 +107,13 @@ public class InputView {
 
 # Controller & Application
 
-
 #### Application
 
 ```
 public class Application {
     public static void main(String[] args) {
         MainController mainController = new MainController(InputView.getInstance(), OutputView.getInstance());
-        mainController.service();
+        mainController.process();
     }
 }
 ```
@@ -138,7 +137,7 @@ public class MainController {
         this.outputView = outputView;
     }
 
-    public void service() {
+    public void process() {
         outputView.printGameStart();
     }
 }
@@ -409,25 +408,28 @@ public enum MainOption {
 public class Application {
     public static void main(String[] args) {
             MainController mainController = new MainController(InputView.getInstance(), OutputView.getInstance());
-            mainController.service();
+            mainController.play();
     }
 }
 ```
 
 ### `Controller` 로직 결정
 
-- [`BridgeGame`] 다양하게 상황에 따라 게임이 얽히고 설켜 복잡한 플로우차트 => [`Supplier` 로직](#로직-supplier)으로!
+- [`Supplier` 로직](#1.-로직-supplier) => [`BridgeGame`]처럼 다양하게 상황에 따라 게임이 얽히고 설켜 **복잡한 플로우차트**
     - 플로우차트를 먼저 구상한 뒤에 그것과 똑같이 만들면 안정적임!!!
     - `GameVariableRepository` 같은 클래스에 `시도 회수, 성공 여부` 등을 함께 관리하면 더 효율적!
-- [`PairMatching`] 시작은 간단하나, 각각 무거운 로직 + [`Repository`](#repository)랑 같이 사용하면 효과적 => [`Controller` 로직](#로직-controller)
-  으로!
+- [`Controller` 로직](#2.-로직-controller) => [`PairMatching`]처럼 시작은 간단하나, 각각 무거운 로직 +
+    - [`Repository`](#repository)랑 같이 사용하면 효과적
+      으로!
     - 각각의 `Controller`에서도 각각 성질에 따라서 눈치껏 다른 로직 진행
-- [`Runnable` 로직](#로직-runnable)
+- [`Runnable` 로직](#3.-로직-runnable)
     - controller를 나누는 것과 비슷하나 한 클래스에 넣을 수 있음 (짧은 내용)
 
-## 로직 supplier
+---
 
-- 복잡한 플로우차트 적합
+## 1. 로직 supplier
+
+- **복잡한 플로우차트** 적합 (예. BridgeGame)
 
 ``` 
 public class MainController {
@@ -438,32 +440,32 @@ public class MainController {
     public MainController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
         this.outputView = outputView;
-        this.gameGuide = new EnumMap<>(ApplicationStatus.class);
+        this.gameGuide = new EnumMap<>(ApplicationStatus.class); // 밑에 status 있음
         initializeGameGuide();
     }
-
-    public void service() {
+    
+    private void initializeGameGuide() {
+        gameGuide.put(ApplicationStatus.CREATE_BRIDGE, this::createBridge);
+    }
+    
+    public void play() {
         ApplicationStatus applicationStatus = progress(ApplicationStatus.CREATE_BRIDGE); // 초기 설정
         while (applicationStatus.playable()) {
-            applicationStatus = progress(applicationStatus);
+            applicationStatus = process(applicationStatus);
         }
     }
 
-    public ApplicationStatus progress(ApplicationStatus applicationStatus) {
+    public ApplicationStatus process(ApplicationStatus applicationStatus) {
         try {
             return gameGuide.get(applicationStatus).get();
         } catch (NullPointerException exception) { 
-        // 전부 다 해당해놓기 전에는 발생하므로 냅두자
-        // 여기서 IllegalArgumentException도 처리해도 되지만, 한 Stauts에 여러 input이 있으면 꼬일 수 있음 (InputView에서 최대한 처리)
             return ApplicationStatus.APPLICATION_EXIT;
         }
     }
 
-    private void initializeGameGuide() {
-        gameGuide.put(ApplicationStatus.CREATE_BRIDGE, this::createBridge);
-    }
-
     private ApplicationStatus createBridge() {
+    // 입력 하나 틀리면 다시 입력 => inputView에서 해결
+    // 입력 검증하다가 틀리면 다시 입력 => Supplier를 리턴하는 방식
     }
 
 
@@ -479,10 +481,12 @@ public class MainController {
 }
 ```
 
-## 로직 controller
+---
 
-- 시작은 간단하나, 각각이 무거운 `controller`일 경우 분리
-- 미리 분리하는게 복잡도를 줄여서 편안함
+## 2. 로직 controller
+
+- 시작에서 **큰 옵션**을 받아 간단하나, 각각이 무거운 `controller`일 경우 분리
+- *미리 분리*하는게 복잡도를 줄여서 편안함
 - 이 경우, 검증 로직이 포함되므로 `MainOption`은 분리해서 `public enum`으로 다루자!
 
 - Controllable 인터페이스 생성
@@ -494,7 +498,7 @@ public interface Controllable {
 }
 ```
 
-- 하위 Controller 만들기 (예시)
+- 하위 Controller 만들기 (예시) **implements**
 
 ``` 
 public class OrderRegistrationController implements Controllable {
@@ -502,7 +506,6 @@ public class OrderRegistrationController implements Controllable {
     private final InputView inputView;
     private final OutputView outputView;
 
-    // View를 인자로 넘기냐에 따라 다름
     public OrderRegistrationController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
         this.outputView = outputView;
@@ -510,7 +513,7 @@ public class OrderRegistrationController implements Controllable {
 
     @Override
     public void process() {
-     // 작성 => 이 controller도 controller 로직을 적용해도 좋음! 
+     // 작성 => 이 controller도 눈치껏 controller 로직을 적용해도 좋음! 
     }
 
 }
@@ -573,11 +576,11 @@ private final OutputView outputView;
         do {
             outputView.printMainScreen();
             mainOption = inputView.readMainOption();
-            progress(mainOption);
+            process(mainOption);
         } while (mainOption.isPlayable());
     }
 
-    public void progress(MainOption mainOption) {
+    public void process(MainOption mainOption) {
         try {
             controllers.get(mainOption).process();
         } catch (IllegalArgumentException exception) {
@@ -587,7 +590,7 @@ private final OutputView outputView;
 }
 ```
 
-## 로직 runnable
+## 3. 로직 runnable
 
 ``` 
 
@@ -608,10 +611,10 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
     }
 
     public void service() {
-        progress(ApplicationStatus.CREW_LOADING);
+        process(ApplicationStatus.CREW_LOADING);
     }
 
-    public void progress(ApplicationStatus applicationStatus) {
+    public void process(ApplicationStatus applicationStatus) {
         try {
             controllers.get(applicationStatus).run();
         } catch (IllegalArgumentException exception) {
@@ -684,7 +687,7 @@ public enum BridgeSign {
         return Arrays.stream(BridgeSign.values())
                 .filter(element -> element.number == number)
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.NO_SUCH_BRIDGE_SIGN.getMessage()));
+                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.~~.getMessage()));
     }
 
     public static String numberToSign(int number) {
@@ -809,11 +812,13 @@ public enum BridgeSign {
         if (ticketBudget.equals(BigDecimal.ZERO)) {
             return BigDecimal.ZERO;
         }
-        return totalCashPrize.multiply(new BigDecimal("100")).divide(ticketBudget, 1, RoundingMode.HALF_EVEN);
+        return totalCashPrize.multiply(new BigDecimal("100")).divide(ticketBudget, 1, RoundingMode.HALF_EVEN); 
+        // 퍼센트는 미리 곱하기
+        // 몇째 자리까지 왔으면 좋겠다는걸 두번째 숫자에!
     }
 ```
 
-## repository
+## repository 저장소 개념 static 레포지토리
 
 ``` 
 public class Crews {
@@ -853,7 +858,7 @@ public class Crews {
 
 #### 주의사항
 
-1. try, catch로 꼭 IOException 잡아줘야함
+1. try, catch로 꼭 `IOException` 잡아줘야함 => 안잡으면 에러
 2. 파일 경로 조심 + 오타 조심
 3. 한줄씩 읽을거면 `BufferedReader` 아니면 다른거 (구글링)
 
@@ -901,32 +906,32 @@ if (!MONEY_REGEX.matcher(input).matches()) {
 - R, Q 외의 문자는 안됨
 
 ```
- String moveCommandRegex = "^([RQ])$";
+String moveCommandRegex = "^([RQ])$";
 
-        if (!Pattern.matches(moveCommandRegex, restartCommand)) {
-            throw new IllegalArgumentException(InputErrorText.ERROR_RESTART_COMMAND.errorText());
-        }
+      if (!Pattern.matches(moveCommandRegex, restartCommand)) {
+          throw new IllegalArgumentException(InputErrorText.ERROR_RESTART_COMMAND.errorText());
+      }
 ```
 
 - 369 게임에서 3, 6, 9가 들어간 글자 골라내기
 
 ```
- private static int calculateCurrentNumberClaps(int currentNumber) {
-        int originalLength = String.valueOf(currentNumber).length();
-        return originalLength - String.valueOf(currentNumber).replaceAll("[369]", "").length();
-    }
+private static int calculateCurrentNumberClaps(int currentNumber) {
+      int originalLength = String.valueOf(currentNumber).length();
+      return originalLength - String.valueOf(currentNumber).replaceAll("[369]", "").length();
+  }
 ```
 
 - 중복 검사
 
 ```
 public static void isDistinct(String input) {
-long count = input.chars()
-    .distinct()
-    .count();
-if (count != ConstVariable.SIZE.getValue()) {
-    throw new IllegalArgumentException();
-}
+  long count = input.chars()
+      .distinct()
+      .count();
+  if (count != ConstVariable.SIZE.getValue()) {
+      throw new IllegalArgumentException();
+  }
 }
  ```
 
