@@ -82,17 +82,15 @@ public class InputView {
     
     // static이면 이 위에 지우고 아래를 static으로 만들면됨
 
-    public int readBudget() {
-        System.out.println(Message.INPUT_BUDGET.message);
+    public String readMainOption() {
+        System.out.println(Message.INPUT_MAIN_OPTION.message);
         String input = Console.readLine();
-       // String input = Util.removeSpace(Console.readLine());
-        // validate
-        return Integer.parseInt(input);
+        return input;
     }
 
 
      private enum Message {
-        INPUT_BUDGET("구입금액을 입력해 주세요.");
+        INPUT_MAIN_OPTION("메인 옵션");
 
         private final String message;
 
@@ -138,7 +136,6 @@ public class MainController {
     }
 
     public void play() {
-        outputView.printGameStart();
     }
 }
 ```
@@ -148,9 +145,6 @@ public class MainController {
 ### 출력 메세지 처리
 
 #### ExceptionMessage
-
-- 고냥 모든 Message에 사용 가능
-- 클래스 분리하지 않고 해당 클래스 안에서 `private`
 
 ```
 public enum ExceptionMessage {
@@ -173,8 +167,6 @@ public enum ExceptionMessage {
 
 - 예외를 던지는 곳에서
   `throw new IllegalArgumentException(ExceptionMessage.~~.getMessage());`
-- 같은 클래스 내면
-  `throw new IllegalArgumentException(ExceptionMessage.~~.message);`
 
 ## Util
 
@@ -327,10 +319,11 @@ class BudgetValidatorTest {
 }
 ```
 
-## Constants
+## Constants (최대한 X)
 
+- 최대한 클래스 내에서 해결
 - 다양한 자료형의 상수가 모여있다면 `Enum`을 활용하기 어려움
-- 한 클래스가 아니라 여러 클래스에서 사용되는 상수의 경우 따로 클래스를 만들자!
+- 한 클래스가 아니라 **여러 클래스에서 사용**되는 상수의 경우 따로 클래스를 만들자!
 
 ```
 public class Constants {
@@ -346,7 +339,7 @@ public class Constants {
 
 ```
 
-### `MapPractice` 을 key, value (키, 값) 순으로 출력하기
+### `MapPractice` 을 key, value (키, 값) 순으로 출력하기 `Map.Entry`
 
 ```
     Map<Integer, Integer> map = new HashMap<>();
@@ -364,8 +357,6 @@ public class Constants {
 ```
 public enum MainOption {
     PAIR_MATCHING("1"),
-    PAIR_SEARCHING("2"),
-    PAIR_INITIALIZING("3"),
     QUIT("Q");
 
     private final String command;
@@ -390,7 +381,7 @@ public enum MainOption {
 }
 ```
 
-## 로직 controller
+--- 
 
 ## 우테코 최종 코딩테스트 가이드라인 for Controller 로직
 
@@ -419,8 +410,7 @@ public class Application {
     - 플로우차트를 먼저 구상한 뒤에 그것과 똑같이 만들면 안정적임!!!
     - `GameVariableRepository` 같은 클래스에 `시도 회수, 성공 여부` 등을 함께 관리하면 더 효율적!
 - [`Controller` 로직](#2.-로직-controller) => [`PairMatching`]처럼 시작은 간단하나, 각각 무거운 로직 +
-    - [`Repository`](#repository)랑 같이 사용하면 효과적
-      으로!
+    - [`Repository`](#repository)랑 같이 사용하면 효과적으로!
     - 각각의 `Controller`에서도 각각 성질에 따라서 눈치껏 다른 로직 진행
 - [`Runnable` 로직](#3.-로직-runnable)
     - controller를 나누는 것과 비슷하나 한 클래스에 넣을 수 있음 (짧은 내용)
@@ -449,7 +439,7 @@ public class MainController {
     }
     
     public void play() {
-        ApplicationStatus applicationStatus = progress(ApplicationStatus.CREATE_BRIDGE); // 초기 설정
+        ApplicationStatus applicationStatus = progress(ApplicationStatus.CREATE_BRIDGE); // 초기 status
         while (applicationStatus.playable()) {
             applicationStatus = process(applicationStatus);
         }
@@ -458,14 +448,15 @@ public class MainController {
     public ApplicationStatus process(ApplicationStatus applicationStatus) {
         try {
             return gameGuide.get(applicationStatus).get();
-        } catch (NullPointerException exception) { 
+        } catch (
+        Exception exception) { 
             return ApplicationStatus.APPLICATION_EXIT;
         }
     }
 
     private ApplicationStatus createBridge() {
-    // 입력 하나 틀리면 다시 입력 => inputView에서 해결
-    // 입력 검증하다가 틀리면 다시 입력 => Supplier를 리턴하는 방식
+      // 입력 하나 틀리면 다시 입력 => inputView에서 해결
+      // 입력 검증하다가 틀리면 다시 입력 => ApplicationStatus를 리턴하는 방식
     }
 
 
@@ -485,7 +476,7 @@ public class MainController {
 
 ## 2. 로직 controller
 
-- 시작에서 **큰 옵션**을 받아 간단하나, 각각이 무거운 `controller`일 경우 분리
+- 시작에서 **큰 옵션**을 받아 간단하나, 각각이 무거운 `controller`일 경우 분리 예) 페어매칭 
 - *미리 분리*하는게 복잡도를 줄여서 편안함
 - 이 경우, 검증 로직이 포함되므로 `MainOption`은 분리해서 `public enum`으로 다루자!
 
@@ -498,28 +489,7 @@ public interface Controllable {
 }
 ```
 
-- 하위 Controller 만들기 (예시) **implements**
-
-``` 
-public class OrderRegistrationController implements Controllable {
-
-    private final InputView inputView;
-    private final OutputView outputView;
-
-    public OrderRegistrationController(InputView inputView, OutputView outputView) {
-        this.inputView = inputView;
-        this.outputView = outputView;
-    }
-
-    @Override
-    public void process() {
-     // 작성 => 이 controller도 눈치껏 controller 로직을 적용해도 좋음! 
-    }
-
-}
-```
-
-- MainOption 생성
+- MainOption 생성 (검증 있으니 따로 분리)
 
 ```
 public enum MainOption {
@@ -566,15 +536,14 @@ private final OutputView outputView;
         initializeControllers();
     }
 
-    private void initializeControllers() {
-        controllers.put(MainOption.STATION_MANAGEMENT, new StationManagementController(inputView, outputView));
+    private void initializeControllers() { // APPLICATION_EXIT은 안 만들어도 됨
+        controllers.put(MainOption.STATION_MANAGEMENT, new SubController(inputView, outputView));
     }
 
     public void play() {
-        new InitializingController().process();
+        // new InitializingController().process(); // initializing 로직이 있는 경우 (초기화)
         MainOption mainOption;
         do {
-            outputView.printMainScreen();
             mainOption = inputView.readMainOption();
             process(mainOption);
         } while (mainOption.isPlayable());
@@ -583,12 +552,35 @@ private final OutputView outputView;
     public void process(MainOption mainOption) {
         try {
             controllers.get(mainOption).process();
-        } catch (IllegalArgumentException exception) {
-            outputView.printExceptionMessage(exception);
-        }
+        } catch (NullPointerException ignored) { 
+        // 필요하면 예외 처리 (APPLICATION_EXIT은 안 만들어도 됨)
+        } 
     }
 }
 ```
+
+- SubController 만들기 (예시) **implements** 꼭 쓰기
+
+``` 
+public class SubController implements Controllable {
+
+    private final InputView inputView;
+    private final OutputView outputView;
+
+    public SubController(InputView inputView, OutputView outputView) {
+        this.inputView = inputView;
+        this.outputView = outputView;
+    }
+
+    @Override
+    public void process() {
+     // 작성 => 이 controller도 눈치껏 controller 로직을 선택해 적용해도 좋음! 
+    }
+
+}
+```
+
+
 
 ## 3. 로직 runnable
 
@@ -602,11 +594,11 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
     public MainController(InputView inputView, OutputView outputView) {
         this.inputView = inputView;
         this.outputView = outputView;
-        this.gameGuide = new EnumMap<>(ApplicationStatus.class);
-        initializeControllers();
+        this.gameGuide = new EnumMap<>(ApplicationStatus.class); // 밑에 있음
+        initializeGameGuide();
     }
 
-    private void initializeControllers() {
+    private void initializeGameGuide() {
         gameGuide.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
     }
 
@@ -624,6 +616,15 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
 
     private void crewLoading() {
     // 코드 작성
+    }
+    
+    private enum ApplicationStatus {
+        CREATE_BRIDGE,
+        APPLICATION_EXIT;
+
+        public boolean playable() {
+            return this != APPLICATION_EXIT;
+        }
     }
 }
 ```
