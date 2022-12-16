@@ -559,7 +559,7 @@ private final OutputView outputView;
         } while (mainOption.isPlayable());
     }
 
-    public void process(MainOption mainOption) {
+    private void process(MainOption mainOption) {
         try {
             controllers.get(mainOption).process();
         } catch (NullPointerException ignored) { 
@@ -616,7 +616,7 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
         process(ApplicationStatus.CREW_LOADING);
     }
     
-    public void process(ApplicationStatus applicationStatus) {
+    private void process(ApplicationStatus applicationStatus) {
         try {
             controllers.get(applicationStatus).run();
         } catch (IllegalArgumentException exception) {
