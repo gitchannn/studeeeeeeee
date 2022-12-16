@@ -383,6 +383,8 @@ public enum MainOption {
 
 --- 
 
+## 로직 controller
+
 ## 우테코 최종 코딩테스트 가이드라인 for Controller 로직
 
 ### 목차
@@ -605,7 +607,7 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
     public void play() {
         process(ApplicationStatus.CREW_LOADING);
     }
-
+    
     public void process(ApplicationStatus applicationStatus) {
         try {
             controllers.get(applicationStatus).run();
