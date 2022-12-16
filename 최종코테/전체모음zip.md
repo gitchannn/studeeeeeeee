@@ -137,7 +137,7 @@ public class MainController {
         this.outputView = outputView;
     }
 
-    public void process() {
+    public void play() {
         outputView.printGameStart();
     }
 }
@@ -570,7 +570,7 @@ private final OutputView outputView;
         controllers.put(MainOption.STATION_MANAGEMENT, new StationManagementController(inputView, outputView));
     }
 
-    public void service() {
+    public void play() {
         new InitializingController().process();
         MainOption mainOption;
         do {
@@ -610,7 +610,7 @@ private final Map<ApplicationStatus, Runnable> gameGuide;
         gameGuide.put(ApplicationStatus.CREW_LOADING, this::crewLoading);
     }
 
-    public void service() {
+    public void play() {
         process(ApplicationStatus.CREW_LOADING);
     }
 
