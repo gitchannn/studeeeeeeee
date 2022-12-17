@@ -591,7 +591,9 @@ public class SubController implements Controllable {
 }
 ```
 
-## 3. 로직 runnable (반복 넣으려면 따로 MainOption input을 매번 받아야함) => 로직 Controller 참고
+## 3. 로직 runnable 
+- 비추! 이거 쓸 바에 애지간하면 Controller 로직 쓰기
+- 반복 넣으려면 따로 MainOption input을 매번 받아야함 => 로직 Controller 참고
 
 ``` 
 
