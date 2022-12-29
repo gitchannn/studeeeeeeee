@@ -1,3 +1,5 @@
+package 우테코_프리코스;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
